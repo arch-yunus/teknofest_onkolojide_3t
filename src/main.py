@@ -15,6 +15,8 @@ from typing import Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import traceback
 
 # Proje kök dizinini ekle (Hangi klasörden çalıştırılırsa çalıştırılsın)
 sys.path.append(str(Path(__file__).parent.parent))
@@ -84,64 +86,70 @@ class GlioSightEngine:
         """
         Bir hasta için tüm süreçleri çalıştır (Segmentasyon + Sürviyal + Radyogenomik + XAI + Cerrahi).
         """
-        print(f"\n🚀 GlioSight Kapsamlı Analiz Başladı: {Path(subject_dir).name}")
+        subject_path = Path(subject_dir)
+        if not subject_path.exists():
+            print(f"❌ HATA: Hasta dizini bulunamadı: {subject_path}")
+            return {"error": f"Dizin bulunamadı: {subject_path}"}
+            
+        print(f"\n🚀 GlioSight Kapsamlı Analiz Başladı: {subject_path.name}")
         
-        # A. Segmentasyon
-        seg_results = self.seg_pipeline.predict(subject_dir)
-        seg_mask = seg_results["seg"]
-        subject_id = seg_results["subject_id"]
-        
-        # B. Veri Hazırlama (Özellik Çıkarımı İçin)
-        mri_dict = load_brats_subject(subject_dir, modalities=["flair", "t1ce"], load_seg=False)
-        mri_input = {m: mri_dict[m] for m in ["flair", "t1ce"]}
-        
-        # C. Sağkalım ve Radyogenomik Tahminler
-        surv_results = self.surv_pipeline.predict(mri_dict=mri_input, seg=seg_mask)
-        radio_results = self.radio_pipeline.predict(mri_dict=mri_input, seg=seg_mask)
-        
-        # D. Açıklanabilirlik Analizi (XAI)
-        # Basitlik için sadece tek bir slice/volume cam üretiliyor.
-        xai_heatmap = self.xai_pipeline.generate_heatmap(
-            input_tensor=torch.randn(1, 4, 128, 128, 128) # Placeholder for real tensor
-        )
+        try:
+            # A. Segmentasyon
+            seg_results = self.seg_pipeline.predict(subject_path)
+            seg_mask = seg_results["seg"]
+            subject_id = seg_results["subject_id"]
+            
+            # B. Veri Hazırlama (Özellik Çıkarımı İçin)
+            mri_dict = load_brats_subject(subject_path, modalities=["flair", "t1ce"], load_seg=False)
+            mri_input = {m: mri_dict[m] for m in ["flair", "t1ce"]}
+            
+            # C. Sağkalım ve Radyogenomik Tahminler
+            surv_results = self.surv_pipeline.predict(mri_dict=mri_input, seg=seg_mask)
+            radio_results = self.radio_pipeline.predict(mri_dict=mri_input, seg=seg_mask)
+            
+            # D. Açıklanabilirlik Analizi (XAI)
+            # Basitlik için sadece tek bir slice/volume cam üretiliyor.
+            xai_heatmap = self.xai_pipeline.generate_heatmap(
+                input_tensor=torch.randn(1, 4, 128, 128, 128) # Placeholder for real tensor
+            )
 
-        # E. Cerrahi Planlama (10mm Marjin)
-        surgical_results = calculate_surgical_margins(seg_mask, margin_mm=10.0)
-        proximity_warning = analyze_proximity_to_eloquent(seg_mask)
-        
-        # F. Radyasyon Onkolojisi (Hacim Planlama)
-        radiation_results = self.radiation_planner(seg_mask, ctv_margin_mm=20.0)
-        
-        # G. Dijital Patoloji ve Hassas Tıp (Simüle)
-        pathology_results = self.pathology_emulator.analyze_tissue(mri_dict, seg_mask)
-        precision_results = self.precision_pipeline.predict_response(
-            mgmt_prob=radio_results["mgmt_probability"],
-            mgmt_status=radio_results["mgmt_status"]
-        )
-        
-        # H. Tedavi Yanıt Analizi (RANO) — Compliant with Cat 9
-        # Örnek başlangıç hacmi 45.0 mL (baseline mock)
-        rano_results = evaluate_rano_response(
-            baseline_volume_ml=45.0, 
-            current_volume_ml=surgical_results['tumor_volume_ml']
-        )
-        
-        # --- YENİ V3.0 MODÜLLERİ ---
-        # I. Algoloji ve Ağrı Takibi (Cat 10)
-        algology_results = predict_pain_intensity(
-            heart_rate_variability=42.0, 
-            sleep_quality_score=65.0, 
-            patient_reported_vas=6
-        )
-        
-        # J. Biyoteknoloji ve Neoantijen Keşfi (Cat 3/4)
-        biotech_results = discover_targets(molecular_profile=radio_results)
-        car_t_status = simulate_car_t_efficacy(tumor_microenvironment_index=0.45)
-        
-        # F. Raporlama ve Görselleştirme
-        if output_dir:
-            out_path = Path(output_dir) / subject_id
-            out_path.mkdir(parents=True, exist_ok=True)
+            # E. Cerrahi Planlama (10mm Marjin)
+            surgical_results = calculate_surgical_margins(seg_mask, margin_mm=10.0)
+            proximity_warning = analyze_proximity_to_eloquent(seg_mask)
+            
+            # F. Radyasyon Onkolojisi (Hacim Planlama)
+            radiation_results = self.radiation_planner(seg_mask, ctv_margin_mm=20.0)
+            
+            # G. Dijital Patoloji ve Hassas Tıp (Simüle)
+            pathology_results = self.pathology_emulator.analyze_tissue(mri_dict, seg_mask)
+            precision_results = self.precision_pipeline.predict_response(
+                mgmt_prob=radio_results["mgmt_probability"],
+                mgmt_status=radio_results["mgmt_status"]
+            )
+            
+            # H. Tedavi Yanıt Analizi (RANO) — Compliant with Cat 9
+            # Örnek başlangıç hacmi 45.0 mL (baseline mock)
+            rano_results = evaluate_rano_response(
+                baseline_volume_ml=45.0, 
+                current_volume_ml=surgical_results['tumor_volume_ml']
+            )
+            
+            # --- YENİ V3.0 MODÜLLERİ ---
+            # I. Algoloji ve Ağrı Takibi (Cat 10)
+            algology_results = predict_pain_intensity(
+                heart_rate_variability=42.0, 
+                sleep_quality_score=65.0, 
+                patient_reported_vas=6
+            )
+            
+            # J. Biyoteknoloji ve Neoantijen Keşfi (Cat 3/4)
+            biotech_results = discover_targets(molecular_profile=radio_results)
+            car_t_status = simulate_car_t_efficacy(tumor_microenvironment_index=0.45)
+            
+            # F. Raporlama ve Görselleştirme
+            if output_dir:
+                out_path = Path(output_dir) / subject_id
+                out_path.mkdir(parents=True, exist_ok=True)
             
             # Segmentasyon görseli
             plot_mri_slices(
@@ -234,16 +242,21 @@ class GlioSightEngine:
             
             print(f"✅ Kapsamlı rapor hazırlandı: {out_path}")
             
-        return {
-            "seg": seg_mask,
-            "survival": surv_results,
-            "radiogenomics": radio_results,
-            "surgical": surgical_results,
-            "radiation": radiation_results,
-            "pathology": pathology_results,
-            "precision": precision_results,
-            "xai_heatmap": xai_heatmap
-        }
+            return {
+                "seg": seg_mask,
+                "survival": surv_results,
+                "radiogenomics": radio_results,
+                "surgical": surgical_results,
+                "radiation": radiation_results,
+                "pathology": pathology_results,
+                "precision": precision_results,
+                "xai_heatmap": xai_heatmap
+            }
+
+        except Exception as e:
+            print(f"❌ Kapsamlı Analiz sırasında kritik hata oluştu: {str(e)}")
+            traceback.print_exc()
+            return {"error": str(e), "traceback": traceback.format_exc()}
 
 
 def fwrite_line(f, title, width):

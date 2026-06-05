@@ -13,6 +13,11 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.main import GlioSightEngine
 from src.utils.visualization import BRATS_COLORS
+import tempfile
+import os
+
+if 'analysis_results' not in st.session_state:
+    st.session_state['analysis_results'] = None
 
 # Sayfa Yapılandırması
 st.set_page_config(
@@ -67,7 +72,7 @@ with st.sidebar:
 # Main Content
 st.title("🔬 GlioSight — Multimodal Karar Destek Sistemi")
 
-if not run_analysis:
+if not run_analysis and st.session_state['analysis_results'] is None:
     # Karşılama Ekranı / Dashboard Özeti
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -87,28 +92,45 @@ if not run_analysis:
     with tabs[2]:
         st.image("assets/gliosight_xai_explain.png", caption="Açıklanabilir AI (Grad-CAM) ve Cerrahi/Radyasyon Marjinleri")
 
-else:
+elif run_analysis:
     # Analiz Süreci Simulated
     with st.status("Analiz Yapılıyor...", expanded=True) as status:
+        st.write("Veriler hazırlanıyor...")
+        target_dir = "data/raw/BraTS2021_00001" if Path("data/raw/BraTS2021_00001").exists() else "demo_subject"
+        
+        if uploaded_file is not None:
+            temp_dir = tempfile.mkdtemp()
+            file_path = os.path.join(temp_dir, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            target_dir = temp_dir
+            st.write("Yüklenen dosya işleniyor...")
+
         st.write("MRI modaliteleri normalize ediliyor...")
         st.write("3D U-Net segmentasyon motoru çalıştırılıyor...")
         st.write("Radyomik özellik uzayı hesaplanıyor...")
         st.write("Cerrahi ve Radyasyon marjinleri optimize ediliyor...")
+        
+        # Engine'i yükle
+        engine = GlioSightEngine()
+        results = engine.process_patient(target_dir)
+        st.session_state['analysis_results'] = results
+        
         status.update(label="Analiz Tamamlandı!", state="complete", expanded=False)
 
-    # Engine'i yükle (Real engine call simulated)
-    engine = GlioSightEngine()
-    # Demo verisi için data/raw/BraTS2021_00001 (varsa) veya mock kullan
-    results = engine.process_patient("data/raw/BraTS2021_00001" if Path("data/raw/BraTS2021_00001").exists() else "demo_subject")
-
-    # Sonuç Panele
-    st.success(f"Analiz Başarıyla Tamamlandı: {patient_id}")
-    
-    m_col1, m_col2, m_col3, m_col4 = st.columns(4)
-    m_col1.metric("Risk Skoru", f"{results['survival']['risk_score']:.2f}")
-    m_col2.metric("Tümör Hacmi", f"{results['surgical']['tumor_volume_ml']:.1f} mL")
-    m_col3.metric("Ağrı Seviyesi", results.get('algology', {}).get('pain_level', 'HAFİF'))
-    m_col4.metric("RANO Yanıtı", results.get('rano', {}).get('response_category', 'SD'))
+if st.session_state['analysis_results'] is not None:
+    results = st.session_state['analysis_results']
+    if "error" in results:
+        st.error(f"Analiz sırasında hata oluştu: {results['error']}")
+    else:
+        # Sonuç Panele
+        st.success(f"Analiz Başarıyla Tamamlandı: {patient_id}")
+        
+        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+        m_col1.metric("Risk Skoru", f"{results['survival']['risk_score']:.2f}")
+        m_col2.metric("Tümör Hacmi", f"{results['surgical']['tumor_volume_ml']:.1f} mL")
+        m_col3.metric("Ağrı Seviyesi", results.get('algology', {}).get('pain_level', 'HAFİF'))
+        m_col4.metric("RANO Yanıtı", results.get('rano', {}).get('response_category', 'SD'))
 
     st.divider()
 
@@ -197,9 +219,9 @@ else:
             use_container_width=True
         )
 
-    st.subheader("🧠 Açıklanabilirlik (XAI)")
-    st.write("Modelin karar verirken odaklandığı anatomik bölgeler (Grad-CAM):")
-    st.image("assets/gliosight_xai_explain.png", use_container_width=True)
+        st.subheader("🧠 Açıklanabilirlik (XAI)")
+        st.write("Modelin karar verirken odaklandığı anatomik bölgeler (Grad-CAM):")
+        st.image("assets/gliosight_xai_explain.png", use_container_width=True)
 
 st.divider()
 st.caption("© 2026 GlioSight AI Team | TEKNOFEST Onkolojide 3T")
