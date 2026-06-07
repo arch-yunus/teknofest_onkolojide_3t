@@ -253,7 +253,10 @@ class GlioSightEngine:
                 "pathology": pathology_results,
                 "precision": precision_results,
                 "xai_heatmap": xai_heatmap,
-                "md_report_content": md_content
+                "md_report_content": md_content,
+                "biotech": biotech_results,
+                "rano": rano_results,
+                "algology": algology_results
             }
 
         except Exception as e:

@@ -179,8 +179,51 @@ if st.session_state['analysis_results'] is not None:
                 st.write("**Bağlanma Afinitesi (Molecular Docking):**")
                 st.dataframe(pd.DataFrame(list(results.get('biotech', {}).get('binding_simulation', {}).items()), columns=['Molekül', '-log(Kd)']))
             with col_b2:
+            with col_b2:
                 st.write("**Yeni Nesil Aşı (Neoantigen):**")
                 st.code("\n".join(results.get('biotech', {}).get('neoantigen_candidates', [])), language="text")
+            
+            st.divider()
+            st.write("**İlaç-Hedef Protein Etkileşim Ağı**")
+            network_data = results.get('biotech', {}).get('network_data', {"nodes": [], "edges": []})
+            if network_data["nodes"]:
+                # Create edges
+                edge_x = []
+                edge_y = []
+                # Simple circle layout mockup
+                import math
+                node_positions = {}
+                radius = 10
+                for i, node in enumerate(network_data["nodes"]):
+                    angle = 2 * math.pi * i / len(network_data["nodes"])
+                    node_positions[node["id"]] = (radius * math.cos(angle), radius * math.sin(angle))
+                
+                for edge in network_data["edges"]:
+                    x0, y0 = node_positions[edge["source"]]
+                    x1, y1 = node_positions[edge["target"]]
+                    edge_x.extend([x0, x1, None])
+                    edge_y.extend([y0, y1, None])
+
+                edge_trace = go.Scatter(x=edge_x, y=edge_y, line=dict(width=1, color='#888'), hoverinfo='none', mode='lines')
+                
+                node_x = [node_positions[node["id"]][0] for node in network_data["nodes"]]
+                node_y = [node_positions[node["id"]][1] for node in network_data["nodes"]]
+                node_text = [node["id"] for node in network_data["nodes"]]
+                node_size = [node["size"] for node in network_data["nodes"]]
+                node_color = [node["group"] for node in network_data["nodes"]]
+
+                node_trace = go.Scatter(
+                    x=node_x, y=node_y, mode='markers+text',
+                    hoverinfo='text', text=node_text, textposition="bottom center",
+                    marker=dict(showscale=False, colorscale='YlGnBu', size=node_size, color=node_color, line_width=2))
+                
+                fig_net = go.Figure(data=[edge_trace, node_trace],
+                                    layout=go.Layout(showlegend=False, hovermode='closest',
+                                                     margin=dict(b=0,l=0,r=0,t=0),
+                                                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                                                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                                                     paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)'))
+                st.plotly_chart(fig_net, use_container_width=True)
 
         with tab_algology:
             st.subheader("⌚ Giyilebilir Algoloji İzleme (Cat 10/12)")
@@ -236,6 +279,35 @@ if st.session_state['analysis_results'] is not None:
         st.subheader("🧠 Açıklanabilirlik (XAI)")
         st.write("Modelin karar verirken odaklandığı anatomik bölgeler (Grad-CAM):")
         st.image("assets/gliosight_xai_explain.png", use_container_width=True)
+
+    st.divider()
+    st.header("🤖 Yapay Zeka Klinik Asistan (v3.1)")
+    st.info("Bu asistan, hastanın mevcut profilini (Sağkalım, İlaç Afinitesi, RANO vb.) referans alarak hekime anlık destek sunar.")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "assistant", "content": f"Merhaba Dr., ben GlioSight Klinik Asistanı. {patient_id} numaralı hastanın detaylı analizi bitti. Bulgular hakkında sormak istediğiniz bir şey var mı?"}
+        ]
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("Klinik Asistan'a soru sor... (Örn: Hastanın RANO skoru kaç?)"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            # Mock response logic
+            if "rano" in prompt.lower():
+                response = f"Hastanın RANO tedavi yanıtı '{results.get('rano', {}).get('response_category', 'SD')}' olarak değerlendirilmiştir. Tümör hacminde %{abs(results.get('rano', {}).get('volume_change_pct', 0))*100:.1f} değişim gözlendi."
+            elif "ilaç" in prompt.lower() or "tedavi" in prompt.lower():
+                response = results.get('precision', {}).get('clinical_remark', "Hedefe yönelik ilaç analizi önerilmektedir.")
+            else:
+                response = "Bu konuda klinik veriler içerisinde net bir korelasyon bulamadım, ancak WHO CNS 5 parametrelerini sekmeden inceleyebilirsiniz."
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
 st.divider()
 st.caption("© 2026 GlioSight AI Team | TEKNOFEST Onkolojide 3T")

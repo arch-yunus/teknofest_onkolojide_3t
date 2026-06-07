@@ -39,7 +39,27 @@ def discover_targets(
         "binding_simulation": binding_affinities,
         "precision_score": 0.94,
         "biotech_readiness": "THS 3 (Conceptual Discovery)",
+        "network_data": _get_molecular_network()
     }
+
+def _get_molecular_network() -> Dict[str, List[Dict[str, Any]]]:
+    """Plotly Ağ Grafiği için düğüm ve kenar verilerini oluşturur (Mock)."""
+    nodes = [
+        {"id": "EGFRvIII", "group": 1, "size": 30},
+        {"id": "TMZ", "group": 2, "size": 15},
+        {"id": "GlioCure-V1", "group": 2, "size": 25},
+        {"id": "Pembrolizumab", "group": 2, "size": 20},
+        {"id": "IDH1-R132H", "group": 1, "size": 25},
+        {"id": "TERT", "group": 1, "size": 20}
+    ]
+    edges = [
+        {"source": "TMZ", "target": "EGFRvIII", "value": 7.2},
+        {"source": "GlioCure-V1", "target": "EGFRvIII", "value": 8.9},
+        {"source": "Pembrolizumab", "target": "EGFRvIII", "value": 9.4},
+        {"source": "TMZ", "target": "IDH1-R132H", "value": 4.5},
+        {"source": "GlioCure-V1", "target": "TERT", "value": 6.8}
+    ]
+    return {"nodes": nodes, "edges": edges}
 
 def simulate_car_t_efficacy(
     tumor_microenvironment_index: float,

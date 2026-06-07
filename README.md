@@ -1,6 +1,6 @@
 ![Onkolojide 3T Banner](assets/oncology_3t_premium_banner.png)
 
-# 🔬 GlioSight — Multimodal MRI & Biotech AI Platform (v3.0 Kapsamlı Sürüm)
+# 🔬 GlioSight — Multimodal MRI & Biotech AI Platform (v3.1 Kapsamlı Sürüm)
 > **TEKNOFEST 2026: Onkolojide 3T Yarışması — Tam Kapsamlı (12/12) Egemenlik Seviyesi Karar Destek Sistemi**
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 GlioSight, **TEKNOFEST 2026 Onkolojide 3T** yarışmasının tüm teknik kategorilerini (1-12) kapsayan en gelişmiş yapay zeka ekosistemidir. 
-**v3.0 Güncellemesi:** Premium Dashboard arayüzü, 3B interaktif tümör dağılımları, Plotly destekli sağkalım analizleri ve otomatik detaylı klinik rapor (.md) oluşturma özelliklerini içermektedir.
+**v3.1 Güncellemesi:** Yapay Zeka Klinik Asistan (Chatbot), İlaç-Protein etkileşim ağ grafikleri (Network Graph) ve V3.0'ın interaktif grafik özellikleri ile güçlendirilmiştir.
 
 > **Not:** Bu proje **ARAT Takımı** altında geliştirilmektedir.
 
