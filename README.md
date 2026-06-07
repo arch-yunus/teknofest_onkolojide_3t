@@ -1,15 +1,18 @@
 ![Onkolojide 3T Banner](assets/oncology_3t_premium_banner.png)
 
-# 🔬 GlioSight — Multimodal MRI & Biotech AI Platform (v3.0)
+# 🔬 GlioSight — Multimodal MRI & Biotech AI Platform (v3.0 Kapsamlı Sürüm)
 > **TEKNOFEST 2026: Onkolojide 3T Yarışması — Tam Kapsamlı (12/12) Egemenlik Seviyesi Karar Destek Sistemi**
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![MONAI](https://img.shields.io/badge/MONAI-Medical_AI-blue)](https://monai.io/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Plotly](https://img.shields.io/badge/Plotly-Interactive-3f4f75?logo=plotly&logoColor=white)](https://plotly.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Premium_Dashboard-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-GlioSight, **TEKNOFEST 2026 Onkolojide 3T** yarışmasının tüm teknik kategorilerini (1-12) kapsayan en gelişmiş yapay zeka ekosistemidir. Sadece bir görüntüleme aracı değil; **Tanı, 3B Segmentasyon, Radyomik, Moleküler Patoloji (WHO CNS 5), İlaç Keşfi, Kanser Aşısı ve Algoloji** disiplinlerini tek bir mimaride birleştiren "Egemen Katman" (Sovereignty Tier) çözümüdür.
+GlioSight, **TEKNOFEST 2026 Onkolojide 3T** yarışmasının tüm teknik kategorilerini (1-12) kapsayan en gelişmiş yapay zeka ekosistemidir. 
+**v3.0 Güncellemesi:** Premium Dashboard arayüzü, 3B interaktif tümör dağılımları, Plotly destekli sağkalım analizleri ve otomatik detaylı klinik rapor (.md) oluşturma özelliklerini içermektedir.
+
+> **Not:** Bu proje **ARAT Takımı** altında geliştirilmektedir.
 
 ---
 

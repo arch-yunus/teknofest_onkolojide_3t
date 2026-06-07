@@ -202,43 +202,45 @@ class GlioSightEngine:
 
             # Yeni: Markdown Raporu (Premium Sunum İçin)
             md_report_file = out_path / "clinical_summary.md"
+            md_content = f"# 🧪 GlioSight — Klinik Karar Destek Özeti\n\n"
+            md_content += f"**Hasta Protokol No:** `{subject_id}`  \n"
+            md_content += f"**Analiz Tarihi:** 31 Mart 2026\n\n"
+            
+            md_content += f"## 1. Onkolojik Profil ve Prognoz (WHO CNS 5)\n"
+            md_content += f"| Parametre | Sonuç | Klinik Yorum |\n"
+            md_content += f"| :--- | :--- | :--- |\n"
+            md_content += f"| OS Risk Skoru | **{surv_results['risk_score']:.3f}** | {'Yüksek Risk' if surv_results['risk_score'] > 0.5 else 'Düşük/Orta Risk'} |\n"
+            md_content += f"| MGMT Metilasyonu | **{radio_results['mgmt_status']}** | TMZ Duyarlılığı Mevcut |\n"
+            md_content += f"| IDH Mutasyonu | **{radio_results['idh_status']}** | {radio_results['who_classification_hint']} |\n"
+            md_content += f"| 1p/19q Co-del | **{radio_results['codel_1p19q_status']}** | Grade {pathology_results['cellularity_index']} ile uyumlu |\n\n"
+            
+            md_content += f"## 2. Tedavi Yanıt Analizi (RANO)\n"
+            md_content += f"**Güncel Durum:** {rano_results['response_category']}  \n"
+            md_content += f"**Hacim Değişimi:** %{rano_results['volume_change_pct']*100:.1f}  \n\n"
+
+            md_content += f"## 3. Hacimsel ve Geometrik Analiz\n"
+            md_content += f"| Bölge | Hacim (mL) | Standart |\n"
+            md_content += f"| :--- | :--- | :--- |\n"
+            md_content += f"| Brüt Tümör (GTV) | {surgical_results['tumor_volume_ml']:.2f} | 3D U-Net |\n"
+            md_content += f"| CTV (20mm) | {radiation_results['ctv_stats']['volume_ml']:.2f} | ESTRO |\n"
+            md_content += f"| PTV (3mm) | {radiation_results['ptv_stats']['volume_ml']:.2f} | Klinik Marjin |\n\n"
+            
+            md_content += f"## 3. Tedavi Önerisi (Hassas Tıp)\n"
+            md_content += f"> {precision_results['clinical_remark']}\n\n"
+            
+            md_content += f"## 4. İleri Biyoteknoloji (Drug Discovery & Vaccines)\n"
+            md_content += f"**Aşı Tipi:** {biotech_results['vaccine_type']}  \n"
+            md_content += f"**Hedef:** {biotech_results['candidate_targets'][0]} (Binding Score: 9.4)  \n"
+            md_content += f"**CAR-T Durumu:** {car_t_status}  \n\n"
+            
+            md_content += f"## 5. Algoloji ve Yaşam Kalitesi\n"
+            md_content += f"**Ağrı Seviyesi:** {algology_results['pain_level']} (VAS: {algology_results['predicted_vas']})  \n"
+            md_content += f"**Öneri:** {algology_results['analgesic_protocol']}  \n\n"
+
+            md_content += f"--- \n*Bu rapor GlioSight v3.0 (Sovereignty Tier) AI motoru tarafından otomatik olarak üretilmiştir.*\n"
+            
             with open(md_report_file, "w", encoding="utf-8") as f:
-                f.write(f"# 🧪 GlioSight — Klinik Karar Destek Özeti\n\n")
-                f.write(f"**Hasta Protokol No:** `{subject_id}`  \n")
-                f.write(f"**Analiz Tarihi:** 31 Mart 2026\n\n")
-                
-                f.write(f"## 1. Onkolojik Profil ve Prognoz (WHO CNS 5)\n")
-                f.write(f"| Parametre | Sonuç | Klinik Yorum |\n")
-                f.write(f"| :--- | :--- | :--- |\n")
-                f.write(f"| OS Risk Skoru | **{surv_results['risk_score']:.3f}** | {'Yüksek Risk' if surv_results['risk_score'] > 0.5 else 'Düşük/Orta Risk'} |\n")
-                f.write(f"| MGMT Metilasyonu | **{radio_results['mgmt_status']}** | TMZ Duyarlılığı Mevcut |\n")
-                f.write(f"| IDH Mutasyonu | **{radio_results['idh_status']}** | {radio_results['who_classification_hint']} |\n")
-                f.write(f"| 1p/19q Co-del | **{radio_results['codel_1p19q_status']}** | Grade {pathology_results['cellularity_index']} ile uyumlu |\n\n")
-                
-                f.write(f"## 2. Tedavi Yanıt Analizi (RANO)\n")
-                f.write(f"**Güncel Durum:** {rano_results['response_category']}  \n")
-                f.write(f"**Hacim Değişimi:** %{rano_results['volume_change_pct']*100:.1f}  \n\n")
-
-                f.write(f"## 3. Hacimsel ve Geometrik Analiz\n")
-                f.write(f"| Bölge | Hacim (mL) | Standart |\n")
-                f.write(f"| :--- | :--- | :--- |\n")
-                f.write(f"| Brüt Tümör (GTV) | {surgical_results['tumor_volume_ml']:.2f} | 3D U-Net |\n")
-                f.write(f"| CTV (20mm) | {radiation_results['ctv_stats']['volume_ml']:.2f} | ESTRO |\n")
-                f.write(f"| PTV (3mm) | {radiation_results['ptv_stats']['volume_ml']:.2f} | Klinik Marjin |\n\n")
-                
-                f.write(f"## 3. Tedavi Önerisi (Hassas Tıp)\n")
-                f.write(f"> {precision_results['clinical_remark']}\n\n")
-                
-                f.write(f"## 4. İleri Biyoteknoloji (Drug Discovery & Vaccines)\n")
-                f.write(f"**Aşı Tipi:** {biotech_results['vaccine_type']}  \n")
-                f.write(f"**Hedef:** {biotech_results['candidate_targets'][0]} (Binding Score: 9.4)  \n")
-                f.write(f"**CAR-T Durumu:** {car_t_status}  \n\n")
-                
-                f.write(f"## 5. Algoloji ve Yaşam Kalitesi\n")
-                f.write(f"**Ağrı Seviyesi:** {algology_results['pain_level']} (VAS: {algology_results['predicted_vas']})  \n")
-                f.write(f"**Öneri:** {algology_results['analgesic_protocol']}  \n\n")
-
-                f.write(f"--- \n*Bu rapor GlioSight v3.0 (Sovereignty Tier) AI motoru tarafından otomatik olarak üretilmiştir.*")
+                f.write(md_content)
             
             print(f"✅ Kapsamlı rapor hazırlandı: {out_path}")
             
@@ -250,7 +252,8 @@ class GlioSightEngine:
                 "radiation": radiation_results,
                 "pathology": pathology_results,
                 "precision": precision_results,
-                "xai_heatmap": xai_heatmap
+                "xai_heatmap": xai_heatmap,
+                "md_report_content": md_content
             }
 
         except Exception as e:

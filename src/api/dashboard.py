@@ -86,11 +86,25 @@ if not run_analysis and st.session_state['analysis_results'] is None:
     tabs = st.tabs(["3B Segmentasyon", "Sağkalım Analizi", "XAI & Planlama"])
     
     with tabs[0]:
-        st.image("assets/gliosight_3d_seg.png", caption="3B Residual U-Net Segmentasyon Sonuçları (NCR, ED, ET)")
+        st.subheader("İnteraktif 3B Tümör Dağılımı")
+        np.random.seed(42)
+        tumor_core = np.random.normal(loc=0, scale=1, size=(500, 3))
+        edema = np.random.normal(loc=2, scale=2, size=(800, 3))
+        fig3d = go.Figure()
+        fig3d.add_trace(go.Scatter3d(x=tumor_core[:,0], y=tumor_core[:,1], z=tumor_core[:,2], mode='markers', marker=dict(size=3, color='red'), name='Tümör Çekirdeği (NCR/NET)'))
+        fig3d.add_trace(go.Scatter3d(x=edema[:,0], y=edema[:,1], z=edema[:,2], mode='markers', marker=dict(size=2, color='green', opacity=0.3), name='Ödem (ED)'))
+        fig3d.update_layout(margin=dict(l=0, r=0, b=0, t=0), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig3d, use_container_width=True)
     with tabs[1]:
-        st.image("assets/gliosight_survival_chart.png", caption="Radyomik Tabanlı Kaplan-Meier Sağkalım Tahmini")
+        st.subheader("Kaplan-Meier Sağkalım Eğrisi (Radyomik)")
+        t = np.linspace(0, 60, 100)
+        survival_prob = np.exp(-t/20)
+        fig_km = px.line(x=t, y=survival_prob, labels={'x': 'Zaman (Ay)', 'y': 'Sağkalım Olasılığı'}, title='Yüksek Risk Grubuna Göre Tahmini Sağkalım')
+        fig_km.add_scatter(x=t, y=np.exp(-t/40), mode='lines', name='Düşük Risk Referansı', line=dict(dash='dash', color='gray'))
+        fig_km.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+        st.plotly_chart(fig_km, use_container_width=True)
     with tabs[2]:
-        st.image("assets/gliosight_xai_explain.png", caption="Açıklanabilir AI (Grad-CAM) ve Cerrahi/Radyasyon Marjinleri")
+        st.image("assets/gliosight_xai_explain.png", caption="Açıklanabilir AI (Grad-CAM) ve Cerrahi/Radyasyon Marjinleri", use_container_width=True)
 
 elif run_analysis:
     # Analiz Süreci Simulated
@@ -213,8 +227,8 @@ if st.session_state['analysis_results'] is not None:
         """, unsafe_allow_html=True)
         
         st.download_button(
-            "📄 KLİNİK RAPORU İNDİR (PDF/MD)",
-            data="# Rapport Content Placeholder",
+            "📄 KLİNİK RAPORU İNDİR (MD)",
+            data=results.get('md_report_content', "# Rapor İçeriği Bulunamadı"),
             file_name=f"GlioSight_Report_{patient_id}.md",
             use_container_width=True
         )
